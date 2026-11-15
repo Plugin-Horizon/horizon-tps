@@ -1,0 +1,8 @@
+[package]
+name = "tps-core"
+version = "1.0.0"
+edition = "2021"
+description = "Rolling TPS averages and the /tps reply text (std only)"
+license = "MIT"
+
+[dependencies]

@@ -1,0 +1,13 @@
+id = "tps"
+name = "TPS"
+version = "1.000"
+description = "/tps: TPS of the last 1, 5 and 15 minutes and the tick time of the last 100 ticks."
+authors = ["Detimes"]
+api = "0.2"
+capabilities = []
+
+[native]
+game = "26.3"
+# Engine and mixins revisions this mod was built against.
+horizon = "897e208953e2961716560b2cb7db96914f8d83ff"
+mixins = "5a64af938ec86b00d53d16a408aabc0038fb3e57"

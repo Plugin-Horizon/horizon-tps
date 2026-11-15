@@ -1,0 +1,11 @@
+[package]
+name = "mod-tps"
+version = "1.0.0"
+edition = "2024"
+publish = false
+license = "MIT"
+
+[dependencies]
+# The launcher (or stage.py) points this at the Horizon source the game is built from.
+horizon-mod-api = { git = "https://github.com/arismoko/horizon" }
+tps-core = { path = "core" }
