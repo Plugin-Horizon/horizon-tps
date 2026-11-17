@@ -2,7 +2,7 @@ id = "tps"
 name = "TPS"
 version = "1.000"
 description = "/tps: TPS of the last 1, 5 and 15 minutes and the tick time of the last 100 ticks."
-authors = ["Detimes"]
+authors = ["LionSpacer"]
 api = "0.2"
 capabilities = []
 
