@@ -1,16 +1,19 @@
 //! `/tps` for a Horizon dedicated server as a native trait mod: the TPS of the last 1, 5 and 15
 //! minutes (Paper's /tps line) plus the tick time of the last 100 ticks. The averaging lives in
-//! the engine-free `tps-core` crate; this file only wires it to the tick hook and the command.
+//! the engine-free `tracker` module; this file only wires it to the tick hook and the command.
 //!
-//! Permission: node `bukkit.command.tps` (as on Paper), operator level 2 when no permissions mod
-//! answers. The console may always run it.
+//! Permission: Boolean node `bukkit.command.tps` (as on Paper), granted from operator level 2
+//! unless the server's permission handler answers otherwise. The console may always run it.
+mod tracker;
+
+use crate::tracker::TpsTracker;
 use mod_api::{
-    Command, Flow, Hooks, PlayerCommandEvent, PlayerRef, RegisterCommandsEvent, RunModCommandEvent,
+    Command, Flow, Hooks, NodeDefault, PermissionGatherNodesEvent, PermissionLevel, PermissionNode,
+    PermissionValueType, PlayerCommandEvent, PlayerRef, RegisterCommandsEvent, RunModCommandEvent,
     ServerHost, ServerTickEvent, ServerTickPhase, Text,
 };
 use std::sync::{Mutex, OnceLock};
 use std::time::Instant;
-use tps_core::TpsTracker;
 
 const NODE: &str = "bukkit.command.tps";
 const LEVEL: u8 = 2;
@@ -20,16 +23,19 @@ struct Mod {
     tracker: Mutex<Option<TpsTracker>>,
 }
 
+fn node() -> PermissionNode {
+    PermissionNode::new(NODE, PermissionValueType::Boolean)
+}
+
 /// Nanoseconds on a monotonic clock since the mod first asked.
 fn now_ns() -> u64 {
     static START: OnceLock<Instant> = OnceLock::new();
     START.get_or_init(Instant::now).elapsed().as_nanos() as u64
 }
 
-fn grants(host: &dyn ServerHost, player: PlayerRef, node: &str, level: u8) -> bool {
-    player
-        .permission_value(host, node)
-        .unwrap_or_else(|| player.permission_level(host).unwrap_or(0) >= level)
+/// Any refusal of the query (handler error, unknown player, ...) is a denial, never a grant.
+fn grants(host: &mut dyn ServerHost, player: PlayerRef) -> bool {
+    player.permission_bool(host, &node()).unwrap_or(false)
 }
 
 fn coloured(host: &dyn ServerHost, line: &str) -> Text {
@@ -38,8 +44,12 @@ fn coloured(host: &dyn ServerHost, line: &str) -> Text {
 
 #[mod_api::horizon_mod]
 impl Hooks for Mod {
+    fn permission_gather_nodes(&self, _: &mut dyn ServerHost, event: &mut PermissionGatherNodesEvent<'_>) {
+        let _ = event.nodes.add(node(), NodeDefault::Level(PermissionLevel::from_level(i32::from(LEVEL))));
+    }
+
     fn register_commands(&self, _: &mut dyn ServerHost, event: &mut RegisterCommandsEvent<'_>) {
-        event.commands.push(Command::op("tps", LEVEL).with_node(NODE));
+        event.commands.push(Command::op("tps", LEVEL).with_node(&node()));
     }
 
     fn player_command(&self, host: &mut dyn ServerHost, event: &mut PlayerCommandEvent<'_>) -> Flow {
@@ -48,7 +58,9 @@ impl Hooks for Mod {
         if root != "tps" {
             return Flow::Continue;
         }
-        if host.player(event.player).is_some_and(|p| grants(&*host, p, NODE, LEVEL)) {
+        if let Some(player) = host.player(event.player)
+            && grants(host, player)
+        {
             return Flow::Continue;
         }
         event.replies.push(Text::literal("\u{a7}cI'm sorry, but you do not have permission to perform this command. Please contact the server administrators if you believe that this is in error."));
@@ -66,7 +78,7 @@ impl Hooks for Mod {
             .lock()
             .map(|t| t.as_ref().map_or([f64::from(rate); 3], TpsTracker::averages))
             .unwrap_or([f64::from(rate); 3]);
-        for line in tps_core::reply(averages, &host.tick_times()) {
+        for line in crate::tracker::reply(averages, &host.tick_times()) {
             let text = coloured(&*host, &line);
             let _ = host.commands().feedback(text);
         }

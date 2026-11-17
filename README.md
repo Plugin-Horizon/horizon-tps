@@ -1,7 +1,7 @@
 # horizon-tps
 
-`/tps` for a [Horizon](https://github.com/horizon-rust/horizon) dedicated server, as a native trait mod
-(arismoko mod API). Shows the TPS of the last 1, 5 and 15 minutes in Paper's format, plus the
+`/tps` for a [Horizon](https://github.com/horizon-rust/horizon) dedicated server, as a native mod in the
+flat `.hmod` layout. Shows the TPS of the last 1, 5 and 15 minutes in Paper's format, plus the
 average, lowest and highest tick time of the last 100 ticks:
 
 ```
@@ -15,16 +15,19 @@ Tick time (last 100 ticks) avg/min/max: 3.1/1.2/9.8 ms
 
 ## Layout
 
-- `core/` — engine-free logic (rolling averages, reply text), std only: `cargo test` in `core/`.
-- `src/lib.rs` — the hooks: `server_tick` feeds the tracker, `register_commands`/`run_mod_command` answer `/tps`.
-- `horizon-mod.toml` — the engine revision it was built against.
-- `mixins/tps/` — the same command for the older horizon-mixins line (glue injected into the engine); it reads the
-  engine's own 1/5/15-minute averages (`native_tps`) instead of the trait mod's tracker.
+- `src/tracker.rs` — engine-free logic (rolling averages, reply text), std only, with its unit tests.
+- `src/lib.rs` — the hooks: `permission_gather_nodes` declares the node, `server_tick` feeds the tracker,
+  `register_commands`/`run_mod_command` answer `/tps`.
+- `horizon-mod.toml` — mod identity and the exact Horizon and horizon-mixins commits it is pinned to.
 
 ## Build
 
-Stage it with the engine like any native trait mod (`horizon-launcher native-build`), then build
-`-p horizon-native-game --no-default-features`.
+```sh
+cargo horizon-mod build                          # target/horizon-mod/tps.hmod
+cargo horizon-mod check target/horizon-mod/tps.hmod
+```
+
+Needs a signed SDK for the pinned build and Horizon's typed permission nodes (horizon-rust/horizon#17831).
 
 ## License
 

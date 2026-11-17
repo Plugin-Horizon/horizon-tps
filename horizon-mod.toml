@@ -4,10 +4,12 @@ version = "1.000"
 description = "/tps: TPS of the last 1, 5 and 15 minutes and the tick time of the last 100 ticks."
 authors = ["LionSpacer"]
 api = "0.2"
-capabilities = []
+side = "server"
+capabilities = ["registries"]
 
 [native]
 game = "26.3"
-# Engine and mixins revisions this mod was built against.
-horizon = "897e208953e2961716560b2cb7db96914f8d83ff"
-mixins = "5a64af938ec86b00d53d16a408aabc0038fb3e57"
+# Horizon main when this layout was written. No signed SDK exists for it yet: repin with
+# `cargo horizon-mod update` to the first build that has one.
+horizon = "bc5753b57d0c2e7824aa98a953f9e64d19dad873"
+mixins = "e59da9094f0c2fdda6c627fe9eff22dec6a906f0"
