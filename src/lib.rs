@@ -44,7 +44,7 @@ fn coloured(host: &dyn ServerHost, line: &str) -> Text {
 
 #[mod_api::horizon_mod]
 impl Hooks for Mod {
-    fn permission_gather_nodes(&self, _: &mut dyn ServerHost, event: &mut PermissionGatherNodesEvent<'_>) {
+    fn permission_gather_nodes(&self, event: &mut PermissionGatherNodesEvent<'_>) {
         let _ = event.nodes.add(node(), NodeDefault::Level(PermissionLevel::from_level(i32::from(LEVEL))));
     }
 
